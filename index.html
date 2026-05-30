@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Energy Cost Estimator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-a: #071733;
+      --bg-b: #0a2d5a;
+      --bg-c: #0f4a66;
+      --panel: rgba(255,255,255,0.94);
+      --panel-strong: rgba(255,255,255,0.98);
+      --ink: #10223f;
+      --muted: #4c647c;
+      --line: rgba(18, 58, 104, 0.14);
+      --green: #1c7d52;
+      --green-2: #5da93f;
+      --blue: #1e5f9c;
+      --blue-2: #20406f;
+      --shadow: 0 22px 64px rgba(0, 10, 30, 0.25);
+      --shadow-soft: 0 10px 22px rgba(13, 37, 74, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 15% 18%, rgba(37, 202, 173, 0.16), transparent 22%),
+        radial-gradient(circle at 84% 24%, rgba(95, 169, 63, 0.14), transparent 24%),
+        radial-gradient(circle at 55% 92%, rgba(30, 95, 156, 0.24), transparent 30%),
+        linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 52%, var(--bg-c) 100%);
+      background-attachment: fixed;
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px 16px 36px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 18px 8px 20px;
+      color: #fff;
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.5rem, 3.6vw, 2.2rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    header p {
+      margin: 0;
+      max-width: 760px;
+      color: rgba(226, 241, 255, 0.9);
+      line-height: 1.45;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7ce0bb;
+      margin-bottom: 10px;
+    }
+
+    .badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #26cf9e;
+      box-shadow: 0 0 16px rgba(38, 207, 158, 0.7);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 980px);
+      gap: 18px;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(205, 225, 236, 0.84);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .formula {
+      margin-top: 12px;
+      max-width: 520px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(250, 253, 255, 0.98), rgba(231, 244, 249, 0.98));
+      border: 1px solid rgba(30, 95, 156, 0.12);
+      color: #274766;
+      box-shadow: var(--shadow-soft);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .formula-title,
+    .formula-result {
+      display: block;
+      color: var(--green);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .formula-title {
+      margin-bottom: 4px;
+    }
+
+    .input-card {
+      padding: 24px 28px 26px;
+      display: grid;
+      align-content: start;
+      gap: 18px;
+    }
+
+    .input-card h2 {
+      margin: 0;
+      color: #0a2250;
+      font-size: 1.5rem;
+      line-height: 1.1;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #173b68;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid rgba(18, 58, 104, 0.18);
+      border-radius: 12px;
+      padding: 14px 14px;
+      font-size: 1.05rem;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .field input:focus {
+      border-color: rgba(30, 95, 156, 0.48);
+      box-shadow: 0 0 0 4px rgba(30, 95, 156, 0.12);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .rep-setup {
+      margin-top: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .rep-setup h2 {
+      margin: 0;
+      color: #0a2250;
+      font-size: 1.45rem;
+      line-height: 1.1;
+    }
+
+    .rep-setup-intro {
+      margin: -6px 0 0;
+      color: #5a7188;
+      line-height: 1.45;
+    }
+
+    .rep-setup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .rep-photo-field {
+      grid-row: span 2;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .rep-photo-preview {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #fff;
+      background: linear-gradient(180deg, #edf5fa, #fff);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .save-status {
+      min-height: 1.2em;
+      color: var(--green);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      padding: 13px 18px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #1e5f9c, #1f8f61);
+      box-shadow: 0 10px 18px rgba(20, 89, 142, 0.18);
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    button.secondary {
+      color: #173b68;
+      background: #fff;
+      border: 1px solid rgba(18, 58, 104, 0.18);
+      box-shadow: none;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      background: var(--panel-strong);
+      border: 1px solid rgba(205, 225, 236, 0.84);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow-soft);
+      min-height: 112px;
+      display: grid;
+      align-content: center;
+    }
+
+    .metric span {
+      color: #5a7188;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      color: #0a2250;
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      line-height: 1.05;
+    }
+
+    .input-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .quick-profile {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(250, 253, 255, 0.88), rgba(231, 244, 249, 0.82));
+      border: 1px solid rgba(30, 95, 156, 0.12);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .quick-profile-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .quick-profile-head h3 {
+      margin: 0;
+      color: #0a2250;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .quick-profile-total {
+      color: var(--green);
+      font-size: 0.88rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .quick-profile-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .quick-card {
+      display: grid;
+      gap: 3px;
+      width: 100%;
+      min-height: 64px;
+      padding: 10px 12px;
+      border: 1px solid rgba(18, 58, 104, 0.16);
+      border-radius: 12px;
+      color: #173b68;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: none;
+      text-align: left;
+      font-size: 0.9rem;
+      transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
+    }
+
+    .quick-card:hover {
+      transform: translateY(-1px);
+      filter: none;
+      border-color: rgba(30, 95, 156, 0.36);
+      box-shadow: 0 8px 16px rgba(13, 37, 74, 0.1);
+    }
+
+    .quick-card strong,
+    .quick-card span {
+      display: block;
+      line-height: 1.2;
+    }
+
+    .quick-card strong {
+      font-size: 0.94rem;
+      color: #0a2250;
+    }
+
+    .quick-card span {
+      color: #5a7188;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .quick-card.is-selected {
+      border-color: transparent;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(235, 250, 244, 0.94)) padding-box,
+        linear-gradient(135deg, #1e5f9c, #1f8f61) border-box;
+      box-shadow: 0 10px 18px rgba(20, 89, 142, 0.16);
+    }
+
+    .quick-profile-note {
+      margin: 0;
+      color: #5a7188;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .forecast-control {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(250, 253, 255, 0.88), rgba(231, 244, 249, 0.82));
+      border: 1px solid rgba(30, 95, 156, 0.12);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .forecast-control label {
+      margin: 0;
+      font-weight: 800;
+      color: #173b68;
+    }
+
+    .forecast-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 4px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(18, 58, 104, 0.12);
+    }
+
+    .forecast-option {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #173b68;
+      background: transparent;
+      box-shadow: none;
+      font-size: 0.9rem;
+    }
+
+    .forecast-option:hover {
+      transform: none;
+      filter: none;
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .forecast-option.is-selected {
+      color: #fff;
+      background: linear-gradient(135deg, #1e5f9c, #1f8f61);
+      box-shadow: 0 8px 14px rgba(20, 89, 142, 0.16);
+    }
+
+    .forecast-note {
+      margin: 0;
+      color: #5a7188;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .assumption-inputs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .report {
+      margin-top: 18px;
+      padding: 24px;
+    }
+
+    .report-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 18px;
+    }
+
+    .report-top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .report.export-mode .report-top-actions {
+      display: none !important;
+    }
+
+    .report-head h2 {
+      margin: 0;
+      color: #071f4d;
+      font-size: 1.6rem;
+    }
+
+    .report-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .generated-on {
+      margin: 8px 0 0;
+      color: #4f647b;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .logo-lockup {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-lockup img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(18, 58, 104, 0.12);
+      background: #fff;
+    }
+
+    .logo-lockup strong {
+      display: block;
+      color: #0a2250;
+      font-size: 1rem;
+    }
+
+    .logo-lockup span {
+      display: block;
+      color: var(--green);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .owner-info {
+      padding: 12px 14px;
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(249, 252, 255, 0.96), rgba(236, 245, 250, 0.96));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .owner-info span {
+      display: block;
+      color: #5a7188;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .owner-info strong {
+      display: block;
+      color: #0a2250;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .report-overview {
+      display: grid;
+      grid-template-columns: minmax(230px, 1.2fr) repeat(2, minmax(190px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+      margin-top: 12px;
+    }
+
+    .report-total-card {
+      padding: 12px 14px;
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(235, 250, 244, 0.92));
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      align-content: center;
+      min-height: 90px;
+    }
+
+    .report-total-card span {
+      display: block;
+      color: #5a7188;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .report-total-card strong {
+      display: block;
+      color: #0a2250;
+      font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+      line-height: 1.1;
+    }
+
+    .report-total-card em {
+      display: block;
+      margin-top: 6px;
+      color: var(--green);
+      font-size: 0.78rem;
+      font-style: normal;
+      font-weight: 800;
+    }
+
+    .community-card {
+      margin-top: 14px;
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(249, 252, 255, 0.98), rgba(236, 245, 250, 0.98));
+      padding: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .community-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .community-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .community-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(30, 95, 156, 0.12), rgba(28, 125, 82, 0.12));
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      color: var(--blue);
+    }
+
+    .community-head h3 {
+      margin: 0;
+      color: #0a2250;
+      font-size: 1.05rem;
+      line-height: 1.2;
+      white-space: normal;
+      word-break: keep-all;
+    }
+
+    .community-badge {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(30, 95, 156, 0.18);
+      background: linear-gradient(135deg, rgba(30, 95, 156, 0.10), rgba(28, 125, 82, 0.10));
+      color: #1e5f9c;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .community-subtitle {
+      margin: 0;
+      color: #35546e;
+      line-height: 1.5;
+      font-size: 0.98rem;
+    }
+
+    .community-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0 10px;
+    }
+
+    .community-stat {
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .community-stat span {
+      display: block;
+      color: #5a7188;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .community-stat strong {
+      display: block;
+      color: #0a2250;
+      font-size: 1.05rem;
+      line-height: 1.15;
+    }
+
+    .community-diff-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.84rem;
+      font-weight: 900;
+      line-height: 1.1;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .community-diff-badge.is-below {
+      color: #1c7d52;
+      background: linear-gradient(180deg, rgba(226, 248, 237, 0.98), rgba(208, 242, 225, 0.98));
+      border-color: rgba(28, 125, 82, 0.18);
+    }
+
+    .community-diff-badge.is-near {
+      color: #9a6500;
+      background: linear-gradient(180deg, rgba(255, 245, 219, 0.98), rgba(255, 237, 188, 0.98));
+      border-color: rgba(154, 101, 0, 0.18);
+    }
+
+    .community-diff-badge.is-above {
+      color: #a44a00;
+      background: linear-gradient(180deg, rgba(255, 235, 223, 0.98), rgba(255, 219, 197, 0.98));
+      border-color: rgba(164, 74, 0, 0.18);
+    }
+
+    .community-disclaimer {
+      margin: 0;
+      color: #5a7188;
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    .table-card {
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 16px;
+      background: #fff;
+      padding: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .table-card h3 {
+      margin: 0 0 10px;
+      color: #0a2250;
+      font-size: 1.05rem;
+    }
+
+    .table-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(18, 58, 104, 0.1);
+      text-align: left;
+      font-size: 0.94rem;
+    }
+
+    th {
+      background: #123b70;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(239, 246, 251, 0.9);
+    }
+
+    td.utility-cell {
+      background: rgba(255, 236, 141, 0.34);
+      font-weight: 700;
+    }
+
+    td.solar-max-cell {
+      background: rgba(199, 224, 181, 0.32);
+      font-weight: 700;
+    }
+
+    td.solar-min-cell {
+      background: rgba(224, 240, 201, 0.44);
+      font-weight: 700;
+    }
+
+    td.savings-cell {
+      background: rgba(204, 236, 188, 0.56);
+      font-weight: 700;
+    }
+
+    td:first-child, th:first-child {
+      font-weight: 700;
+    }
+
+    td:last-child, th:last-child {
+      text-align: right;
+    }
+
+    .assumption-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .assumption-chip {
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 14px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(250,253,255,0.95), rgba(237,245,250,0.95));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .assumption-chip span {
+      display: block;
+      color: #5a7188;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .assumption-chip strong {
+      display: block;
+      margin-top: 6px;
+      color: #0a2250;
+      font-size: 0.98rem;
+      line-height: 1.25;
+    }
+
+    .report-note {
+      margin-top: 12px;
+      color: #5a7188;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .signature-section {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .signature-card,
+    .contact-card {
+      flex: 1 1 0;
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 16px;
+      background: #fff;
+      padding: 16px 18px;
+      box-shadow: var(--shadow-soft);
+      min-width: 0;
+    }
+
+    .signature-card h3,
+    .contact-card h3 {
+      margin: 0 0 10px;
+      color: #0a2250;
+      font-size: 1.05rem;
+    }
+
+    .signature-card p {
+      margin: 0;
+      color: #35546e;
+      line-height: 1.4;
+    }
+
+    .signature-script {
+      color: #0a2250;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-size: 1.35rem;
+      margin: 6px 0 4px;
+    }
+
+    .headshot {
+      width: 128px;
+      height: 128px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid rgba(255,255,255,0.96);
+      box-shadow: 0 10px 24px rgba(12, 34, 63, 0.18);
+      background: #fff;
+      flex: 0 0 auto;
+    }
+
+    .contact-list {
+      display: grid;
+      gap: 6px;
+      color: #173b68;
+      line-height: 1.3;
+      font-size: 0.92rem;
+    }
+
+    .contact-list strong {
+      color: #0a2250;
+    }
+
+    .contact-list div {
+      white-space: nowrap;
+    }
+
+    .breakdown-wrap {
+      overflow-x: auto;
+    }
+
+    .chart-wrap,
+    .bar-chart,
+    .bar,
+    .bar-track,
+    .bar-fill,
+    .chart-header {
+      display: none;
+    }
+
+    .table-card th {
+      color: #5a7188;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+    }
+
+    .note {
+      margin-top: 10px;
+      color: #5a7188;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .empty {
+      color: #6c7f93;
+      font-style: italic;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        flex-direction: column;
+      }
+
+      .report-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .report-overview {
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+
+      .assumption-inputs {
+        grid-template-columns: 1fr;
+      }
+
+      .rep-setup-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-profile-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .report-top-actions {
+        justify-content: flex-start;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .signature-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .community-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        padding-inline: 10px;
+      }
+
+      .input-card,
+      .report {
+        padding: 18px;
+      }
+
+      .assumption-row {
+        grid-template-columns: 1fr;
+      }
+
+      .contact-list div {
+        white-space: normal;
+      }
+
+      .headshot {
+        align-self: center;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .quick-profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <div class="badge">Local Energy Cost Estimator</div>
+        <h1>Yearly energy cost from one average monthly input</h1>
+        <p>Enter a typical monthly cost and the app will estimate a 12-month pattern using a simple seasonal bell curve: 8 regular months at 1.0x and 4 peak months at 2.25x.</p>
+        <div class="formula">
+          <span class="formula-title">Calculation model</span>
+          Annual cost = (8 &times; average month) + (4 &times; 2.25 &times; average month) =
+          <span class="formula-result">17 &times; average month</span>
+        </div>
+      </div>
+      <button id="resetBtn" class="secondary" type="button">Reset</button>
+    </header>
+
+    <section class="hero-grid">
+      <div class="panel input-card">
+        <h2>Average Monthly Input</h2>
+        <div class="input-stack">
+          <div class="field">
+            <label for="ownerName">Homeowner name</label>
+            <input id="ownerName" type="text" autocomplete="name" placeholder="Example: Sam Nguyen-Sop">
+          </div>
+          <div class="field">
+            <label for="ownerAddress">Homeowner address</label>
+            <input id="ownerAddress" type="text" autocomplete="street-address" placeholder="Example: 123 Main St, Walnut, CA">
+          </div>
+          <div class="quick-profile" aria-labelledby="quickProfileTitle">
+            <div class="quick-profile-head">
+              <h3 id="quickProfileTitle">Quick Home Profile</h3>
+              <span class="quick-profile-total" id="quickProfileTotal">$0/month estimate</span>
+            </div>
+            <div class="quick-profile-grid">
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="1000" data-amount="100" aria-pressed="false">
+                <strong>1,000 sqft home</strong>
+                <span>$100 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="1500" data-amount="150" aria-pressed="false">
+                <strong>1,500 sqft home</strong>
+                <span>$150 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="2000" data-amount="200" aria-pressed="false">
+                <strong>2,000 sqft home</strong>
+                <span>$200 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="2500" data-amount="250" aria-pressed="false">
+                <strong>2,500 sqft home</strong>
+                <span>$250 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="3500" data-amount="400" aria-pressed="false">
+                <strong>3,500 sqft home</strong>
+                <span>$400 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="4000" data-amount="500" aria-pressed="false">
+                <strong>4,000 sqft home</strong>
+                <span>$500 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="pool" data-amount="80" aria-pressed="false">
+                <strong>Pool</strong>
+                <span>Adds $80/month</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="ev" data-amount="90" aria-pressed="false">
+                <strong>EV charging</strong>
+                <span>Adds $90/month</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="ac" data-amount="60" aria-pressed="false">
+                <strong>Heavy AC</strong>
+                <span>Adds $60/month</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="wfh" data-amount="35" aria-pressed="false">
+                <strong>Work from home</strong>
+                <span>Adds $35/month</span>
+              </button>
+            </div>
+            <p class="quick-profile-note">Quick selections are modeled estimates. Actual usage may vary.</p>
+          </div>
+          <div class="field">
+            <label for="monthlyInput">Typical monthly bill amount ($)</label>
+            <input id="monthlyInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Example: 150">
+          </div>
+        </div>
+        <div class="assumption-inputs">
+          <div class="field">
+            <label for="utilityRateInput">Utility rate ($/kWh)</label>
+            <input id="utilityRateInput" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.405">
+          </div>
+          <div class="field">
+            <label for="utilityIncreaseInput">Utility increase (%/yr)</label>
+            <input id="utilityIncreaseInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="10.5">
+          </div>
+          <div class="field">
+            <label for="solarIncreaseInput">Solar program increase (%/yr)</label>
+            <input id="solarIncreaseInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="3.5">
+          </div>
+        </div>
+        <div class="forecast-control">
+          <label id="forecastStyleLabel">Forecast Style</label>
+          <div class="forecast-options" role="group" aria-labelledby="forecastStyleLabel">
+            <button class="forecast-option" type="button" data-forecast-mode="simple" aria-pressed="false">Simple</button>
+            <button class="forecast-option is-selected" type="button" data-forecast-mode="market" aria-pressed="true">Market Trend</button>
+          </div>
+          <p class="forecast-note">Market Trend uses a modeled up/plateau/up pattern. Actual utility rates may vary.</p>
+        </div>
+        <div class="actions">
+          <button id="calculateBtn" type="button">Generate Estimate</button>
+          <button id="sampleBtn" class="secondary" type="button">Use Sample $150</button>
+        </div>
+        <div class="note">
+          Peak months are shown in the middle of the year to mimic seasonal load variation.
+        </div>
+      </div>
+    </section>
+
+    <section class="panel rep-setup" aria-labelledby="repSetupTitle">
+      <h2 id="repSetupTitle">Rep Setup</h2>
+      <p class="rep-setup-intro">Save your rep details once and this browser will keep them ready for future reports.</p>
+      <div class="rep-setup-grid">
+        <div class="field">
+          <label for="repName">Rep name</label>
+          <input id="repName" type="text" autocomplete="name" placeholder="Example: Sam Nguyen-Sop">
+        </div>
+        <div class="field">
+          <label for="repTitle">Title</label>
+          <input id="repTitle" type="text" placeholder="Example: Energy Consultant">
+        </div>
+        <div class="field rep-photo-field">
+          <label for="repPhoto">Rep photo upload</label>
+          <img class="rep-photo-preview" id="repPhotoPreview" src="assets/sam-nguyen-sop-headshot.png" alt="Rep photo preview">
+          <input id="repPhoto" type="file" accept="image/*">
+        </div>
+        <div class="field">
+          <label for="repPhone">Phone</label>
+          <input id="repPhone" type="tel" autocomplete="tel" placeholder="Example: (213) 682-9497">
+        </div>
+        <div class="field">
+          <label for="repEmail">Email</label>
+          <input id="repEmail" type="email" autocomplete="email" placeholder="Example: name@lgcypower.com">
+        </div>
+        <div class="field">
+          <label for="repWebsite">Website/profile URL</label>
+          <input id="repWebsite" type="url" autocomplete="url" placeholder="Example: https://www2.lgcypower.com/name">
+        </div>
+        <div class="field">
+          <label for="repLocation">City/location</label>
+          <input id="repLocation" type="text" autocomplete="address-level2" placeholder="Example: Walnut, CA 91789">
+        </div>
+      </div>
+      <div class="actions">
+        <button id="saveRepSetupBtn" type="button">Save Rep Setup</button>
+        <span class="save-status" id="repSaveStatus" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="summary metrics">
+      <div class="metric">
+        <span>Estimated price per kWh</span>
+        <strong id="rateMetric">$0.405</strong>
+      </div>
+      <div class="metric">
+        <span>Average monthly input</span>
+        <strong id="avgMetric">$0.00</strong>
+      </div>
+      <div class="metric">
+        <span>Year 1 utility cost</span>
+        <strong id="year1UtilityMetric">$0.00</strong>
+      </div>
+      <div class="metric">
+        <span>Year 1 savings range</span>
+        <strong id="savingsMetric">$0.00 - $0.00</strong>
+      </div>
+    </section>
+
+    <section class="panel report" id="reportSection">
+      <div class="report-head">
+        <div>
+          <div class="logo-lockup">
+            <img src="assets/walnut-city-symbol.jpg" alt="City of Walnut symbol">
+            <div>
+              <strong>Energy Cost Report</strong>
+              <span>Seasonal estimate</span>
+            </div>
+          </div>
+          <p>12-month estimate based on a single monthly baseline input.</p>
+          <p class="generated-on" id="generatedOnText">Generated on: May 24, 2026</p>
+          <div class="report-overview">
+            <div class="owner-info">
+              <span>Homeowner</span>
+              <strong id="reportOwnerName">Homeowner name</strong>
+              <strong id="reportOwnerAddress">Homeowner address</strong>
+            </div>
+            <div class="report-total-card">
+              <span>10-year utility cost</span>
+              <strong id="totalUtilityCostMetric">$0.00</strong>
+              <em>Sum of 10-year utility cost</em>
+            </div>
+            <div class="report-total-card">
+              <span>10-year savings range</span>
+              <strong id="totalSavingsRangeMetric">$0.00 - $0.00</strong>
+              <em>Sum min saving to sum max saving</em>
+            </div>
+          </div>
+        </div>
+        <div class="report-top-actions">
+          <button id="exportPngBtn" class="secondary" type="button">Export PNG</button>
+          <button id="exportPdfBtn" type="button">Export PDF</button>
+        </div>
+      </div>
+
+      <div class="assumption-row">
+        <div class="assumption-chip">
+          <span>Utility rate</span>
+          <strong id="assumedRateChip">$0.405/kWh</strong>
+        </div>
+        <div class="assumption-chip">
+          <span>Forecast style</span>
+          <strong id="forecastStyleChip">Market Trend</strong>
+        </div>
+        <div class="assumption-chip">
+          <span>Utility increase</span>
+          <strong id="utilityIncreaseChip">Modeled yearly pattern</strong>
+        </div>
+        <div class="assumption-chip">
+          <span>Solar program increase</span>
+          <strong id="solarIncreaseChip">3.5% per year</strong>
+        </div>
+      </div>
+
+      <div class="community-card" aria-live="polite">
+        <div class="community-head">
+          <div class="community-title-wrap">
+            <div class="community-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18" />
+                <path d="M5 21V10l7-4 7 4v11" />
+                <path d="M9 21v-6h6v6" />
+                <path d="M12 6v3" />
+              </svg>
+            </div>
+            <h3>Community Energy Comparison</h3>
+          </div>
+          <div class="community-badge">MODELED LOCAL ESTIMATE</div>
+        </div>
+        <p class="community-subtitle" id="communityComparisonText">
+              Compared to similar Walnut homes, your estimated yearly electricity usage is approximately 18% above the local average.
+        </p>
+        <div class="community-stats">
+          <div class="community-stat">
+            <span>Your estimated usage</span>
+            <strong id="homeownerYearlyUsageDisplay">0 kWh/year</strong>
+          </div>
+          <div class="community-stat">
+            <span>Modeled local average</span>
+            <strong id="localAverageUsageDisplay">6,800 kWh/year</strong>
+          </div>
+          <div class="community-stat">
+            <span>Difference vs similar homes</span>
+            <strong id="usageDifferenceDisplay" class="community-diff-badge is-near">Near Local Average</strong>
+          </div>
+        </div>
+        <p class="community-disclaimer">
+          Community comparison is a preliminary estimate based on modeled local usage patterns and may vary.
+        </p>
+      </div>
+
+      <div class="report-grid">
+        <div class="table-card">
+          <h3>10-Year Savings Breakdown</h3>
+          <div class="breakdown-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Solar max cost</th>
+                  <th>Min savings</th>
+                  <th>Solar min cost</th>
+                  <th>Max savings</th>
+                  <th>Utility cost</th>
+                </tr>
+              </thead>
+              <tbody id="breakdownBody">
+                <tr><td colspan="6" class="empty">Enter a monthly bill amount to generate the estimate.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="signature-section">
+        <div class="signature-card">
+          <h3>We look forward to working with you.</h3>
+          <p>Sincerely,</p>
+          <div class="signature-script" id="reportRepName">Sam Nguyen-Sop</div>
+          <span><span id="reportRepTitle">Energy Consultant</span><br><span id="reportRepLocation">Walnut, California</span></span>
+        </div>
+        <img class="headshot" id="reportRepPhoto" src="assets/sam-nguyen-sop-headshot.png" alt="Sam Nguyen-Sop headshot">
+        <div class="contact-card">
+          <h3>Contact Info</h3>
+          <div class="contact-list">
+            <div><strong>Phone:</strong> <span id="reportRepPhone">(213) 682-9497</span></div>
+            <div><strong>Email:</strong> <span id="reportRepEmail">samnguyen-sop@lgcypower.com</span></div>
+            <div><strong>Website:</strong> <span id="reportRepWebsite">https://www2.lgcypower.com/samnguyen-sop</span></div>
+            <div><strong>Location:</strong> <span id="reportRepContactLocation">Walnut, CA 91789</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const ESTIMATED_RATE = 0.405;
+    const NORMAL_MONTHS = 8;
+    const PEAK_MONTHS = 4;
+    const PEAK_MULTIPLIER = 2.25;
+    const ANNUAL_BILL_MULTIPLIER = NORMAL_MONTHS + (PEAK_MONTHS * PEAK_MULTIPLIER);
+    const SOLAR_MAX_FACTOR = 0.65;
+    const SOLAR_MIN_FACTOR = 0.52;
+    const MARKET_TREND_INCREASES = [0, 9, 11, 13, 8, 3, 2, 9, 12, 10];
+    const estimatedLocalAverageUsage = 6800;
+    const generatedOnLabel = 'Generated on: May 24, 2026';
+    const REP_SETUP_STORAGE_KEY = 'lgcyRepEstimatorSetup';
+    const DEFAULT_REP_SETUP = {
+      name: 'Sam Nguyen-Sop',
+      title: 'Energy Consultant',
+      phone: '(213) 682-9497',
+      email: 'samnguyen-sop@lgcypower.com',
+      website: 'https://www2.lgcypower.com/samnguyen-sop',
+      location: 'Walnut, CA 91789',
+      photo: 'assets/sam-nguyen-sop-headshot.png'
+    };
+
+    const monthlyInput = document.getElementById('monthlyInput');
+    const ownerName = document.getElementById('ownerName');
+    const ownerAddress = document.getElementById('ownerAddress');
+    const utilityRateInput = document.getElementById('utilityRateInput');
+    const utilityIncreaseInput = document.getElementById('utilityIncreaseInput');
+    const solarIncreaseInput = document.getElementById('solarIncreaseInput');
+    const quickProfileCards = Array.from(document.querySelectorAll('.quick-card'));
+    const quickProfileTotal = document.getElementById('quickProfileTotal');
+    const forecastOptions = Array.from(document.querySelectorAll('.forecast-option'));
+    const calculateBtn = document.getElementById('calculateBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const exportPngBtn = document.getElementById('exportPngBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const avgMetric = document.getElementById('avgMetric');
+    const rateMetric = document.getElementById('rateMetric');
+    const assumedRateChip = document.getElementById('assumedRateChip');
+    const forecastStyleChip = document.getElementById('forecastStyleChip');
+    const utilityIncreaseChip = document.getElementById('utilityIncreaseChip');
+    const solarIncreaseChip = document.getElementById('solarIncreaseChip');
+    const year1UtilityMetric = document.getElementById('year1UtilityMetric');
+    const savingsMetric = document.getElementById('savingsMetric');
+    const communityComparisonText = document.getElementById('communityComparisonText');
+    const homeownerYearlyUsageDisplay = document.getElementById('homeownerYearlyUsageDisplay');
+    const localAverageUsageDisplay = document.getElementById('localAverageUsageDisplay');
+    const usageDifferenceDisplay = document.getElementById('usageDifferenceDisplay');
+    const generatedOnText = document.getElementById('generatedOnText');
+    const reportOwnerName = document.getElementById('reportOwnerName');
+    const reportOwnerAddress = document.getElementById('reportOwnerAddress');
+    const totalUtilityCostMetric = document.getElementById('totalUtilityCostMetric');
+    const totalSavingsRangeMetric = document.getElementById('totalSavingsRangeMetric');
+    const breakdownBody = document.getElementById('breakdownBody');
+    const repName = document.getElementById('repName');
+    const repTitle = document.getElementById('repTitle');
+    const repPhone = document.getElementById('repPhone');
+    const repEmail = document.getElementById('repEmail');
+    const repWebsite = document.getElementById('repWebsite');
+    const repLocation = document.getElementById('repLocation');
+    const repPhoto = document.getElementById('repPhoto');
+    const repPhotoPreview = document.getElementById('repPhotoPreview');
+    const saveRepSetupBtn = document.getElementById('saveRepSetupBtn');
+    const repSaveStatus = document.getElementById('repSaveStatus');
+    const reportRepName = document.getElementById('reportRepName');
+    const reportRepTitle = document.getElementById('reportRepTitle');
+    const reportRepLocation = document.getElementById('reportRepLocation');
+    const reportRepPhoto = document.getElementById('reportRepPhoto');
+    const reportRepPhone = document.getElementById('reportRepPhone');
+    const reportRepEmail = document.getElementById('reportRepEmail');
+    const reportRepWebsite = document.getElementById('reportRepWebsite');
+    const reportRepContactLocation = document.getElementById('reportRepContactLocation');
+    let pendingRepPhotoData = '';
+
+    function money(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 2
+      }).format(value || 0);
+    }
+
+    function percentLabel(value) {
+      return `${Number(value || 0).toFixed(1)}% per year`;
+    }
+
+    function ordinalSuffix(value) {
+      if (value % 100 >= 11 && value % 100 <= 13) return 'th';
+      switch (value % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    }
+
+    function comparisonBadgeText(value) {
+      const amount = Math.abs(value).toFixed(1);
+      if (Math.abs(value) < 2) return 'Near Local Average';
+      if (value > 0) return `+${amount}% Higher Than Similar Homes`;
+      return `${amount}% Lower Than Similar Homes`;
+    }
+
+    function loadRepSetup() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(REP_SETUP_STORAGE_KEY) || '{}');
+        return { ...DEFAULT_REP_SETUP, ...saved };
+      } catch (error) {
+        return { ...DEFAULT_REP_SETUP };
+      }
+    }
+
+    function readRepSetupForm() {
+      const current = loadRepSetup();
+      return {
+        name: repName.value.trim() || DEFAULT_REP_SETUP.name,
+        title: repTitle.value.trim() || DEFAULT_REP_SETUP.title,
+        phone: repPhone.value.trim() || DEFAULT_REP_SETUP.phone,
+        email: repEmail.value.trim() || DEFAULT_REP_SETUP.email,
+        website: repWebsite.value.trim() || DEFAULT_REP_SETUP.website,
+        location: repLocation.value.trim() || DEFAULT_REP_SETUP.location,
+        photo: pendingRepPhotoData || current.photo || DEFAULT_REP_SETUP.photo
+      };
+    }
+
+    function fillRepSetupForm(rep) {
+      repName.value = rep.name;
+      repTitle.value = rep.title;
+      repPhone.value = rep.phone;
+      repEmail.value = rep.email;
+      repWebsite.value = rep.website;
+      repLocation.value = rep.location;
+      repPhotoPreview.src = rep.photo;
+      repPhotoPreview.alt = `${rep.name} photo preview`;
+      pendingRepPhotoData = '';
+    }
+
+    function applyRepSetup(rep) {
+      reportRepName.textContent = rep.name;
+      reportRepTitle.textContent = rep.title;
+      reportRepLocation.textContent = rep.location;
+      reportRepPhone.textContent = rep.phone;
+      reportRepEmail.textContent = rep.email;
+      reportRepWebsite.textContent = rep.website;
+      reportRepContactLocation.textContent = rep.location;
+      reportRepPhoto.src = rep.photo;
+      reportRepPhoto.alt = `${rep.name} headshot`;
+    }
+
+    function saveRepSetup() {
+      const rep = readRepSetupForm();
+      localStorage.setItem(REP_SETUP_STORAGE_KEY, JSON.stringify(rep));
+      fillRepSetupForm(rep);
+      applyRepSetup(rep);
+      repSaveStatus.textContent = 'Rep setup saved';
+      window.setTimeout(() => {
+        repSaveStatus.textContent = '';
+      }, 2800);
+    }
+
+    function comparisonStatusClass(value) {
+      if (Math.abs(value) < 2) return 'is-near';
+      if (value > 0) return 'is-above';
+      return 'is-below';
+    }
+
+    function normalizeInputs() {
+      if (!utilityRateInput.value) utilityRateInput.value = ESTIMATED_RATE.toFixed(3);
+      if (!utilityIncreaseInput.value) utilityIncreaseInput.value = '10.5';
+      if (!solarIncreaseInput.value) solarIncreaseInput.value = '3.5';
+    }
+
+    function selectedQuickProfileTotal() {
+      return quickProfileCards.reduce((total, card) => {
+        if (card.getAttribute('aria-pressed') !== 'true') return total;
+        return total + Number.parseFloat(card.dataset.amount || '0');
+      }, 0);
+    }
+
+    function syncQuickProfileTotal() {
+      const total = selectedQuickProfileTotal();
+      quickProfileTotal.textContent = `${money(total)}/month estimate`;
+    }
+
+    function setQuickCardSelected(card, isSelected) {
+      card.classList.toggle('is-selected', isSelected);
+      card.setAttribute('aria-pressed', String(isSelected));
+    }
+
+    function clearQuickProfile() {
+      quickProfileCards.forEach((card) => setQuickCardSelected(card, false));
+      syncQuickProfileTotal();
+    }
+
+    function applyQuickProfileEstimate() {
+      const total = selectedQuickProfileTotal();
+      monthlyInput.value = total > 0 ? String(total) : '';
+      syncQuickProfileTotal();
+      render();
+    }
+
+    function selectedForecastMode() {
+      const selected = forecastOptions.find((option) => option.getAttribute('aria-pressed') === 'true');
+      return selected ? selected.dataset.forecastMode : 'market';
+    }
+
+    function setForecastMode(mode) {
+      forecastOptions.forEach((option) => {
+        const isSelected = option.dataset.forecastMode === mode;
+        option.classList.toggle('is-selected', isSelected);
+        option.setAttribute('aria-pressed', String(isSelected));
+      });
+    }
+
+    function utilityForecastFactor(year, mode, simpleIncrease) {
+      if (mode === 'simple') {
+        return (1 + (simpleIncrease / 100)) ** (year - 1);
+      }
+
+      let factor = 1;
+      for (let index = 1; index < year; index += 1) {
+        factor *= 1 + ((MARKET_TREND_INCREASES[index] || 0) / 100);
+      }
+      return factor;
+    }
+
+    async function exportReport(kind) {
+      if (!window.html2canvas) return;
+      const report = document.getElementById('reportSection');
+      const safeName = (ownerName.value.trim() || 'homeowner').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'report';
+      const base = `energy-cost-report-${safeName}`;
+      report.classList.add('export-mode');
+
+      try {
+        const canvas = await window.html2canvas(report, {
+          scale: Math.max(2, window.devicePixelRatio || 2),
+          backgroundColor: '#ffffff',
+          useCORS: true
+        });
+
+        if (kind === 'png') {
+          const link = document.createElement('a');
+          link.download = `${base}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          return;
+        }
+
+        const jsPDF = window.jspdf && window.jspdf.jsPDF;
+        if (!jsPDF) return;
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const imgData = canvas.toDataURL('image/png');
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        pdf.save(`${base}.pdf`);
+      } finally {
+        report.classList.remove('export-mode');
+      }
+    }
+
+    function render() {
+      const avg = Number.parseFloat(monthlyInput.value);
+      const utilityRate = Number.parseFloat(utilityRateInput.value) || ESTIMATED_RATE;
+      const utilityIncrease = Number.parseFloat(utilityIncreaseInput.value) || 10.5;
+      const solarIncrease = Number.parseFloat(solarIncreaseInput.value) || 3.5;
+      const forecastMode = selectedForecastMode();
+      const ownerNameValue = ownerName.value.trim() || 'Homeowner name';
+      const ownerAddressValue = ownerAddress.value.trim() || 'Homeowner address';
+      const rateLabel = `$${utilityRate.toFixed(3)}/kWh`;
+      rateMetric.textContent = rateLabel;
+      assumedRateChip.textContent = rateLabel;
+      reportOwnerName.textContent = ownerNameValue;
+      reportOwnerAddress.textContent = ownerAddressValue;
+      generatedOnText.textContent = generatedOnLabel;
+      normalizeInputs();
+      forecastStyleChip.textContent = forecastMode === 'simple' ? 'Simple' : 'Market Trend';
+      utilityIncreaseChip.textContent = forecastMode === 'simple' ? percentLabel(utilityIncrease) : 'Modeled yearly pattern';
+      solarIncreaseChip.textContent = percentLabel(solarIncrease);
+
+      if (!Number.isFinite(avg) || avg <= 0) {
+        avgMetric.textContent = '$0.00';
+        year1UtilityMetric.textContent = '$0.00';
+        savingsMetric.textContent = '$0.00 - $0.00';
+        totalUtilityCostMetric.textContent = '$0.00';
+        totalSavingsRangeMetric.textContent = '$0.00 - $0.00';
+        homeownerYearlyUsageDisplay.textContent = '0 kWh/year';
+        localAverageUsageDisplay.textContent = `${estimatedLocalAverageUsage.toLocaleString()} kWh/year`;
+        usageDifferenceDisplay.textContent = 'Near Local Average';
+        usageDifferenceDisplay.className = 'community-diff-badge is-near';
+        communityComparisonText.textContent = 'Compared to similar Walnut homes, your estimated yearly electricity usage is near the local average.';
+        breakdownBody.innerHTML = '<tr><td colspan="6" class="empty">Enter a monthly bill amount to generate the estimate.</td></tr>';
+        return;
+      }
+
+      avgMetric.textContent = money(avg);
+      const annualBill = avg * ANNUAL_BILL_MULTIPLIER;
+      const annualUsage = annualBill / utilityRate;
+      const year1Utility = annualUsage * utilityRate;
+      const year1SolarMax = year1Utility * SOLAR_MAX_FACTOR;
+      const year1SolarMin = year1Utility * SOLAR_MIN_FACTOR;
+      const year1MinSavings = year1Utility - year1SolarMax;
+      const year1MaxSavings = year1Utility - year1SolarMin;
+      const homeownerYearlyUsage = annualUsage;
+      const usageDifferencePercent = ((homeownerYearlyUsage - estimatedLocalAverageUsage) / estimatedLocalAverageUsage) * 100;
+      const comparisonText = Math.abs(usageDifferencePercent) < 2
+        ? 'Your estimated usage is near the local average for similar homes.'
+        : usageDifferencePercent > 0
+          ? `Your estimated usage is ${Math.abs(usageDifferencePercent).toFixed(1)}% above the local average for similar homes.`
+          : `Your estimated usage is ${Math.abs(usageDifferencePercent).toFixed(1)}% below the local average for similar homes.`;
+
+      year1UtilityMetric.textContent = money(year1Utility);
+      savingsMetric.textContent = `${money(year1MinSavings)} - ${money(year1MaxSavings)}`;
+      homeownerYearlyUsageDisplay.textContent = `${Math.round(homeownerYearlyUsage).toLocaleString()} kWh/year`;
+      localAverageUsageDisplay.textContent = `${estimatedLocalAverageUsage.toLocaleString()} kWh/year`;
+      usageDifferenceDisplay.textContent = comparisonBadgeText(usageDifferencePercent);
+      usageDifferenceDisplay.className = `community-diff-badge ${comparisonStatusClass(usageDifferencePercent)}`;
+      communityComparisonText.textContent = `Compared to similar Walnut homes, ${comparisonText.charAt(0).toLowerCase()}${comparisonText.slice(1)}`;
+
+      const rows = [];
+      let totalUtilityCost = 0;
+      let totalMinSavings = 0;
+      let totalMaxSavings = 0;
+      for (let year = 1; year <= 10; year += 1) {
+        const utilityCost = year1Utility * utilityForecastFactor(year, forecastMode, utilityIncrease);
+        const solarMaxCost = year1SolarMax * ((1 + (solarIncrease / 100)) ** (year - 1));
+        const solarMinCost = year1SolarMin * ((1 + (solarIncrease / 100)) ** (year - 1));
+        const minSavings = utilityCost - solarMaxCost;
+        const maxSavings = utilityCost - solarMinCost;
+        totalUtilityCost += utilityCost;
+        totalMinSavings += minSavings;
+        totalMaxSavings += maxSavings;
+        rows.push(`
+          <tr>
+            <td>${year}${ordinalSuffix(year)} year solar+battery</td>
+            <td class="solar-max-cell">${money(solarMaxCost)}</td>
+            <td class="savings-cell">${money(minSavings)}</td>
+            <td class="solar-min-cell">${money(solarMinCost)}</td>
+            <td class="savings-cell">${money(maxSavings)}</td>
+            <td class="utility-cell">${money(utilityCost)}</td>
+          </tr>
+        `);
+      }
+
+      totalUtilityCostMetric.textContent = money(totalUtilityCost);
+      totalSavingsRangeMetric.textContent = `${money(totalMinSavings)} - ${money(totalMaxSavings)}`;
+      breakdownBody.innerHTML = rows.join('');
+    }
+
+    calculateBtn.addEventListener('click', render);
+    sampleBtn.addEventListener('click', () => {
+      ownerName.value = 'Sam Nguyen-Sop';
+      ownerAddress.value = 'Walnut, CA 91789';
+      monthlyInput.value = '150';
+      utilityRateInput.value = '0.405';
+      utilityIncreaseInput.value = '10.5';
+      solarIncreaseInput.value = '3.5';
+      setForecastMode('market');
+      clearQuickProfile();
+      render();
+    });
+    resetBtn.addEventListener('click', () => {
+      monthlyInput.value = '';
+      ownerName.value = '';
+      ownerAddress.value = '';
+      utilityRateInput.value = '';
+      utilityIncreaseInput.value = '';
+      solarIncreaseInput.value = '';
+      setForecastMode('market');
+      clearQuickProfile();
+      render();
+      monthlyInput.focus();
+    });
+    quickProfileCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const isHomeSize = card.dataset.profileType === 'home';
+        const isSelected = card.getAttribute('aria-pressed') === 'true';
+
+        if (isHomeSize) {
+          quickProfileCards
+            .filter((item) => item.dataset.profileType === 'home')
+            .forEach((item) => setQuickCardSelected(item, false));
+          setQuickCardSelected(card, !isSelected);
+        } else {
+          setQuickCardSelected(card, !isSelected);
+        }
+
+        applyQuickProfileEstimate();
+      });
+    });
+    forecastOptions.forEach((option) => {
+      option.addEventListener('click', () => {
+        setForecastMode(option.dataset.forecastMode);
+        render();
+      });
+    });
+    ownerName.addEventListener('input', render);
+    ownerAddress.addEventListener('input', render);
+    utilityRateInput.addEventListener('input', render);
+    utilityIncreaseInput.addEventListener('input', render);
+    solarIncreaseInput.addEventListener('input', render);
+    monthlyInput.addEventListener('input', render);
+    repPhoto.addEventListener('change', () => {
+      const [file] = repPhoto.files;
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        pendingRepPhotoData = String(reader.result || '');
+        repPhotoPreview.src = pendingRepPhotoData;
+      });
+      reader.readAsDataURL(file);
+    });
+    saveRepSetupBtn.addEventListener('click', saveRepSetup);
+    exportPngBtn.addEventListener('click', () => exportReport('png'));
+    exportPdfBtn.addEventListener('click', () => exportReport('pdf'));
+
+    const savedRepSetup = loadRepSetup();
+    fillRepSetupForm(savedRepSetup);
+    applyRepSetup(savedRepSetup);
+    normalizeInputs();
+    syncQuickProfileTotal();
+    render();
+  </script>
+</body>
+</html>
