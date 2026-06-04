@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monthly Energy Cost Estimator</title>
+  <title>Simple Energy Savings Estimate</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --bg-a: #071733;
-      --bg-b: #0a2d5a;
-      --bg-c: #0f4a66;
+      --bg-a: #eef7fb;
+      --bg-b: #f7fbf6;
+      --bg-c: #e8f3ef;
       --panel: rgba(255,255,255,0.94);
       --panel-strong: rgba(255,255,255,0.98);
       --ink: #10223f;
@@ -31,11 +31,7 @@
       min-height: 100vh;
       color: var(--ink);
       font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
-      background:
-        radial-gradient(circle at 15% 18%, rgba(37, 202, 173, 0.16), transparent 22%),
-        radial-gradient(circle at 84% 24%, rgba(95, 169, 63, 0.14), transparent 24%),
-        radial-gradient(circle at 55% 92%, rgba(30, 95, 156, 0.24), transparent 30%),
-        linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 52%, var(--bg-c) 100%);
+      background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 52%, var(--bg-c) 100%);
       background-attachment: fixed;
     }
 
@@ -51,20 +47,19 @@
       align-items: flex-start;
       gap: 18px;
       padding: 18px 8px 20px;
-      color: #fff;
+      color: var(--ink);
     }
 
     header h1 {
       margin: 0 0 6px;
       font-size: clamp(1.5rem, 3.6vw, 2.2rem);
       line-height: 1.05;
-      letter-spacing: -0.03em;
     }
 
     header p {
       margin: 0;
       max-width: 760px;
-      color: rgba(226, 241, 255, 0.9);
+      color: #405d76;
       line-height: 1.45;
     }
 
@@ -175,56 +170,6 @@
       flex-wrap: wrap;
     }
 
-    .rep-setup {
-      margin-top: 18px;
-      padding: 22px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .rep-setup h2 {
-      margin: 0;
-      color: #0a2250;
-      font-size: 1.45rem;
-      line-height: 1.1;
-    }
-
-    .rep-setup-intro {
-      margin: -6px 0 0;
-      color: #5a7188;
-      line-height: 1.45;
-    }
-
-    .rep-setup-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .rep-photo-field {
-      grid-row: span 2;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-    }
-
-    .rep-photo-preview {
-      width: 112px;
-      height: 112px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid #fff;
-      background: linear-gradient(180deg, #edf5fa, #fff);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .save-status {
-      min-height: 1.2em;
-      color: var(--green);
-      font-size: 0.86rem;
-      font-weight: 800;
-    }
-
     button {
       border: 0;
       border-radius: 12px;
@@ -248,6 +193,27 @@
       background: #fff;
       border: 1px solid rgba(18, 58, 104, 0.18);
       box-shadow: none;
+    }
+
+    .button-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border-radius: 12px;
+      cursor: pointer;
+      padding: 13px 18px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #1e5f9c, #1f8f61);
+      box-shadow: 0 10px 18px rgba(20, 89, 142, 0.18);
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    .button-link:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
     }
 
     .summary-grid {
@@ -382,68 +348,6 @@
       line-height: 1.4;
     }
 
-    .forecast-control {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(250, 253, 255, 0.88), rgba(231, 244, 249, 0.82));
-      border: 1px solid rgba(30, 95, 156, 0.12);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .forecast-control label {
-      margin: 0;
-      font-weight: 800;
-      color: #173b68;
-    }
-
-    .forecast-options {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      padding: 4px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(18, 58, 104, 0.12);
-    }
-
-    .forecast-option {
-      border: 1px solid transparent;
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: #173b68;
-      background: transparent;
-      box-shadow: none;
-      font-size: 0.9rem;
-    }
-
-    .forecast-option:hover {
-      transform: none;
-      filter: none;
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    .forecast-option.is-selected {
-      color: #fff;
-      background: linear-gradient(135deg, #1e5f9c, #1f8f61);
-      box-shadow: 0 8px 14px rgba(20, 89, 142, 0.16);
-    }
-
-    .forecast-note {
-      margin: 0;
-      color: #5a7188;
-      font-size: 0.78rem;
-      line-height: 1.4;
-    }
-
-    .assumption-inputs {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-
     .report {
       margin-top: 18px;
       padding: 24px;
@@ -548,7 +452,7 @@
 
     .report-overview {
       display: grid;
-      grid-template-columns: minmax(230px, 1.2fr) repeat(2, minmax(190px, 1fr));
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
       gap: 14px;
       align-items: stretch;
       margin-top: 12px;
@@ -801,38 +705,6 @@
       text-align: right;
     }
 
-    .assumption-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .assumption-chip {
-      border: 1px solid rgba(18, 58, 104, 0.12);
-      border-radius: 14px;
-      padding: 14px;
-      background: linear-gradient(180deg, rgba(250,253,255,0.95), rgba(237,245,250,0.95));
-      box-shadow: var(--shadow-soft);
-    }
-
-    .assumption-chip span {
-      display: block;
-      color: #5a7188;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      font-size: 0.72rem;
-      font-weight: 800;
-    }
-
-    .assumption-chip strong {
-      display: block;
-      margin-top: 6px;
-      color: #0a2250;
-      font-size: 0.98rem;
-      line-height: 1.25;
-    }
-
     .report-note {
       margin-top: 12px;
       color: #5a7188;
@@ -847,23 +719,53 @@
       margin-top: 16px;
     }
 
+    .cta-panel {
+      margin-top: 14px;
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(239, 248, 255, 0.98), rgba(235, 250, 244, 0.98));
+      padding: 20px;
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .cta-panel h3 {
+      margin: 0;
+      color: #0a2250;
+      font-size: 1.35rem;
+      line-height: 1.15;
+    }
+
+    .cta-panel p {
+      margin: 0;
+      color: #35546e;
+      line-height: 1.45;
+    }
+
     .signature-section {
       margin-top: 14px;
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       align-items: center;
-      justify-content: space-between;
       gap: 24px;
+      padding: 18px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(239, 248, 255, 0.98), rgba(235, 250, 244, 0.98));
+      border: 1px solid rgba(18, 58, 104, 0.12);
+      box-shadow: var(--shadow-soft);
     }
 
     .signature-card,
     .contact-card {
-      flex: 1 1 0;
       border: 1px solid rgba(18, 58, 104, 0.12);
-      border-radius: 16px;
+      border-radius: 12px;
       background: #fff;
       padding: 16px 18px;
       box-shadow: var(--shadow-soft);
       min-width: 0;
+      height: 100%;
     }
 
     .signature-card h3,
@@ -887,15 +789,21 @@
       margin: 6px 0 4px;
     }
 
+    .signature-card span {
+      display: block;
+      color: #173b68;
+      line-height: 1.35;
+      font-size: 0.92rem;
+    }
+
     .headshot {
-      width: 128px;
-      height: 128px;
+      width: 112px;
+      height: 112px;
       border-radius: 50%;
       object-fit: cover;
       border: 4px solid rgba(255,255,255,0.96);
       box-shadow: 0 10px 24px rgba(12, 34, 63, 0.18);
       background: #fff;
-      flex: 0 0 auto;
     }
 
     .contact-list {
@@ -903,15 +811,22 @@
       gap: 6px;
       color: #173b68;
       line-height: 1.3;
-      font-size: 0.92rem;
+      font-size: 0.88rem;
     }
 
     .contact-list strong {
       color: #0a2250;
     }
 
-    .contact-list div {
-      white-space: nowrap;
+    .report-disclaimer {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 246, 224, 0.82);
+      border: 1px solid rgba(154, 101, 0, 0.16);
+      color: #665018;
+      font-size: 0.88rem;
+      line-height: 1.45;
     }
 
     .breakdown-wrap {
@@ -966,14 +881,6 @@
         width: 100%;
       }
 
-      .assumption-inputs {
-        grid-template-columns: 1fr;
-      }
-
-      .rep-setup-grid {
-        grid-template-columns: 1fr;
-      }
-
       .quick-profile-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -984,13 +891,17 @@
         align-items: flex-start;
       }
 
-      .signature-section {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
       .community-stats {
         grid-template-columns: 1fr;
+      }
+
+      .signature-section {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+      }
+
+      .headshot {
+        justify-self: center;
       }
     }
 
@@ -1004,16 +915,8 @@
         padding: 18px;
       }
 
-      .assumption-row {
-        grid-template-columns: 1fr;
-      }
-
       .contact-list div {
-        white-space: normal;
-      }
-
-      .headshot {
-        align-self: center;
+        overflow-wrap: anywhere;
       }
     }
 
@@ -1028,30 +931,17 @@
   <div class="shell">
     <header>
       <div>
-        <div class="badge">Local Energy Cost Estimator</div>
-        <h1>Yearly energy cost from one average monthly input</h1>
-        <p>Enter a typical monthly cost and the app will estimate a 12-month pattern using a simple seasonal bell curve: 8 regular months at 1.0x and 4 peak months at 2.25x.</p>
-        <div class="formula">
-          <span class="formula-title">Calculation model</span>
-          Annual cost = (8 &times; average month) + (4 &times; 2.25 &times; average month) =
-          <span class="formula-result">17 &times; average month</span>
-        </div>
+        <div class="badge">Anonymous UtilityIQ Estimate</div>
+        <h1>Simple Energy Savings Estimate</h1>
+        <p>No bill required. No personal information required.</p>
       </div>
       <button id="resetBtn" class="secondary" type="button">Reset</button>
     </header>
 
     <section class="hero-grid">
       <div class="panel input-card">
-        <h2>Average Monthly Input</h2>
+        <h2>Start with a quick home profile or your average bill</h2>
         <div class="input-stack">
-          <div class="field">
-            <label for="ownerName">Homeowner name</label>
-            <input id="ownerName" type="text" autocomplete="name" placeholder="Example: Sam Nguyen-Sop">
-          </div>
-          <div class="field">
-            <label for="ownerAddress">Homeowner address</label>
-            <input id="ownerAddress" type="text" autocomplete="street-address" placeholder="Example: 123 Main St, Walnut, CA">
-          </div>
           <div class="quick-profile" aria-labelledby="quickProfileTitle">
             <div class="quick-profile-head">
               <h3 id="quickProfileTitle">Quick Home Profile</h3>
@@ -1074,13 +964,33 @@
                 <strong>2,500 sqft home</strong>
                 <span>$250 baseline</span>
               </button>
-              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="3500" data-amount="400" aria-pressed="false">
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="3000" data-amount="300" aria-pressed="false">
+                <strong>3,000 sqft home</strong>
+                <span>$300 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="3500" data-amount="350" aria-pressed="false">
                 <strong>3,500 sqft home</strong>
+                <span>$350 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="4000" data-amount="400" aria-pressed="false">
+                <strong>4,000 sqft home</strong>
                 <span>$400 baseline</span>
               </button>
-              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="4000" data-amount="500" aria-pressed="false">
-                <strong>4,000 sqft home</strong>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="4500" data-amount="450" aria-pressed="false">
+                <strong>4,500 sqft home</strong>
+                <span>$450 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="5000" data-amount="500" aria-pressed="false">
+                <strong>5,000 sqft home</strong>
                 <span>$500 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="5500" data-amount="550" aria-pressed="false">
+                <strong>5,500 sqft home</strong>
+                <span>$550 baseline</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="home" data-profile-key="6000" data-amount="600" aria-pressed="false">
+                <strong>6,000 sqft home</strong>
+                <span>$600 baseline</span>
               </button>
               <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="pool" data-amount="80" aria-pressed="false">
                 <strong>Pool</strong>
@@ -1089,6 +999,14 @@
               <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="ev" data-amount="90" aria-pressed="false">
                 <strong>EV charging</strong>
                 <span>Adds $90/month</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="ev-plus-1" data-amount="180" aria-pressed="false">
+                <strong>EV charging Plus 1</strong>
+                <span>Adds $180/month</span>
+              </button>
+              <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="ev-plus-2" data-amount="270" aria-pressed="false">
+                <strong>EV charging Plus 2</strong>
+                <span>Adds $270/month</span>
               </button>
               <button class="quick-card" type="button" data-profile-type="addon" data-profile-key="ac" data-amount="60" aria-pressed="false">
                 <strong>Heavy AC</strong>
@@ -1102,93 +1020,30 @@
             <p class="quick-profile-note">Quick selections are modeled estimates. Actual usage may vary.</p>
           </div>
           <div class="field">
-            <label for="monthlyInput">Typical monthly bill amount ($)</label>
+            <label for="monthlyInput">Average monthly utility bill amount ($)</label>
             <input id="monthlyInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Example: 150">
           </div>
         </div>
-        <div class="assumption-inputs">
-          <div class="field">
-            <label for="utilityRateInput">Utility rate ($/kWh)</label>
-            <input id="utilityRateInput" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.405">
-          </div>
-          <div class="field">
-            <label for="utilityIncreaseInput">Utility increase (%/yr)</label>
-            <input id="utilityIncreaseInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="10.5">
-          </div>
-          <div class="field">
-            <label for="solarIncreaseInput">Solar program increase (%/yr)</label>
-            <input id="solarIncreaseInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="3.5">
-          </div>
-        </div>
-        <div class="forecast-control">
-          <label id="forecastStyleLabel">Forecast Style</label>
-          <div class="forecast-options" role="group" aria-labelledby="forecastStyleLabel">
-            <button class="forecast-option" type="button" data-forecast-mode="simple" aria-pressed="false">Simple</button>
-            <button class="forecast-option is-selected" type="button" data-forecast-mode="market" aria-pressed="true">Market Trend</button>
-          </div>
-          <p class="forecast-note">Market Trend uses a modeled up/plateau/up pattern. Actual utility rates may vary.</p>
-        </div>
         <div class="actions">
-          <button id="calculateBtn" type="button">Generate Estimate</button>
-          <button id="sampleBtn" class="secondary" type="button">Use Sample $150</button>
+          <button id="quick-estimate-generate" type="button">Generate My Quick Estimate</button>
         </div>
         <div class="note">
-          Peak months are shown in the middle of the year to mimic seasonal load variation.
+          This is a rough educational estimate. Actual savings require bill review, roof review, and program qualification.
         </div>
-      </div>
-    </section>
-
-    <section class="panel rep-setup" aria-labelledby="repSetupTitle">
-      <h2 id="repSetupTitle">Rep Setup</h2>
-      <p class="rep-setup-intro">Save your rep details once and this browser will keep them ready for future reports.</p>
-      <div class="rep-setup-grid">
-        <div class="field">
-          <label for="repName">Rep name</label>
-          <input id="repName" type="text" autocomplete="name" placeholder="Example: Sam Nguyen-Sop">
-        </div>
-        <div class="field">
-          <label for="repTitle">Title</label>
-          <input id="repTitle" type="text" placeholder="Example: Energy Consultant">
-        </div>
-        <div class="field rep-photo-field">
-          <label for="repPhoto">Rep photo upload</label>
-          <img class="rep-photo-preview" id="repPhotoPreview" src="assets/sam-nguyen-sop-headshot.png" alt="Rep photo preview">
-          <input id="repPhoto" type="file" accept="image/*">
-        </div>
-        <div class="field">
-          <label for="repPhone">Phone</label>
-          <input id="repPhone" type="tel" autocomplete="tel" placeholder="Example: (213) 682-9497">
-        </div>
-        <div class="field">
-          <label for="repEmail">Email</label>
-          <input id="repEmail" type="email" autocomplete="email" placeholder="Example: name@lgcypower.com">
-        </div>
-        <div class="field">
-          <label for="repWebsite">Website/profile URL</label>
-          <input id="repWebsite" type="url" autocomplete="url" placeholder="Example: https://www2.lgcypower.com/name">
-        </div>
-        <div class="field">
-          <label for="repLocation">City/location</label>
-          <input id="repLocation" type="text" autocomplete="address-level2" placeholder="Example: Walnut, CA 91789">
-        </div>
-      </div>
-      <div class="actions">
-        <button id="saveRepSetupBtn" type="button">Save Rep Setup</button>
-        <span class="save-status" id="repSaveStatus" aria-live="polite"></span>
       </div>
     </section>
 
     <section class="summary-grid" aria-label="summary metrics">
       <div class="metric">
-        <span>Estimated price per kWh</span>
-        <strong id="rateMetric">$0.405</strong>
+        <span>Estimated yearly kWh</span>
+        <strong id="rateMetric">0 kWh</strong>
       </div>
       <div class="metric">
         <span>Average monthly input</span>
         <strong id="avgMetric">$0.00</strong>
       </div>
       <div class="metric">
-        <span>Year 1 utility cost</span>
+        <span>Estimated yearly utility cost</span>
         <strong id="year1UtilityMetric">$0.00</strong>
       </div>
       <div class="metric">
@@ -1203,52 +1058,43 @@
           <div class="logo-lockup">
             <img src="assets/walnut-city-symbol.jpg" alt="City of Walnut symbol">
             <div>
-              <strong>Energy Cost Report</strong>
-              <span>Seasonal estimate</span>
+              <strong>Simple Energy Savings Estimate</strong>
+              <span>Anonymous estimate</span>
             </div>
           </div>
-          <p>12-month estimate based on a single monthly baseline input.</p>
+          <p>A quick rough estimate based on a home profile or average monthly utility bill.</p>
           <p class="generated-on" id="generatedOnText">Generated on: May 24, 2026</p>
           <div class="report-overview">
             <div class="owner-info">
-              <span>Homeowner</span>
-              <strong id="reportOwnerName">Homeowner name</strong>
-              <strong id="reportOwnerAddress">Homeowner address</strong>
+              <span>Estimate type</span>
+              <strong>Anonymous Estimate</strong>
+              <strong>No personal information required</strong>
             </div>
             <div class="report-total-card">
-              <span>10-year utility cost</span>
+              <span>Estimated yearly utility cost</span>
+              <strong id="reportYearlyUtilityMetric">$0.00</strong>
+              <em>Based on your quick estimate</em>
+            </div>
+            <div class="report-total-card">
+              <span>Estimated yearly kWh</span>
+              <strong id="reportYearlyUsageMetric">0 kWh</strong>
+              <em>Modeled usage estimate</em>
+            </div>
+            <div class="report-total-card">
+              <span>Estimated 10-year utility cost</span>
               <strong id="totalUtilityCostMetric">$0.00</strong>
-              <em>Sum of 10-year utility cost</em>
+              <em>Modeled utility total</em>
             </div>
             <div class="report-total-card">
-              <span>10-year savings range</span>
+              <span>Estimated savings range</span>
               <strong id="totalSavingsRangeMetric">$0.00 - $0.00</strong>
-              <em>Sum min saving to sum max saving</em>
+              <em>Modeled 10-year range</em>
             </div>
           </div>
         </div>
         <div class="report-top-actions">
-          <button id="exportPngBtn" class="secondary" type="button">Export PNG</button>
-          <button id="exportPdfBtn" type="button">Export PDF</button>
-        </div>
-      </div>
-
-      <div class="assumption-row">
-        <div class="assumption-chip">
-          <span>Utility rate</span>
-          <strong id="assumedRateChip">$0.405/kWh</strong>
-        </div>
-        <div class="assumption-chip">
-          <span>Forecast style</span>
-          <strong id="forecastStyleChip">Market Trend</strong>
-        </div>
-        <div class="assumption-chip">
-          <span>Utility increase</span>
-          <strong id="utilityIncreaseChip">Modeled yearly pattern</strong>
-        </div>
-        <div class="assumption-chip">
-          <span>Solar program increase</span>
-          <strong id="solarIncreaseChip">3.5% per year</strong>
+          <button id="export-png" class="secondary" type="button">Export PNG</button>
+          <button id="export-pdf" type="button">Export PDF</button>
         </div>
       </div>
 
@@ -1263,7 +1109,7 @@
                 <path d="M12 6v3" />
               </svg>
             </div>
-            <h3>Community Energy Comparison</h3>
+            <h3>Comparison to Local Average</h3>
           </div>
           <div class="community-badge">MODELED LOCAL ESTIMATE</div>
         </div>
@@ -1297,9 +1143,9 @@
               <thead>
                 <tr>
                   <th>Year</th>
-                  <th>Solar max cost</th>
+                  <th>Program max cost</th>
                   <th>Min savings</th>
-                  <th>Solar min cost</th>
+                  <th>Program min cost</th>
                   <th>Max savings</th>
                   <th>Utility cost</th>
                 </tr>
@@ -1312,21 +1158,31 @@
         </div>
       </div>
 
+      <p class="report-disclaimer">
+        This is a rough educational estimate. Actual savings require bill review, roof review, and program qualification.
+      </p>
+
+      <div class="cta-panel">
+        <h3>Want a more accurate report?</h3>
+        <p>Bill upload gives a more accurate 12-month usage review.</p>
+        <a id="upload-bill-cta" class="button-link" href="https://utilityiq.net/">Upload My Edison Bill</a>
+      </div>
+
       <div class="signature-section">
         <div class="signature-card">
           <h3>We look forward to working with you.</h3>
           <p>Sincerely,</p>
-          <div class="signature-script" id="reportRepName">Sam Nguyen-Sop</div>
-          <span><span id="reportRepTitle">Energy Consultant</span><br><span id="reportRepLocation">Walnut, California</span></span>
+          <div class="signature-script">Sam Nguyen-Sop</div>
+          <span>Energy Consultant<br>Walnut, California</span>
         </div>
-        <img class="headshot" id="reportRepPhoto" src="assets/sam-nguyen-sop-headshot.png" alt="Sam Nguyen-Sop headshot">
+        <img class="headshot" src="assets/sam-nguyen-sop-headshot.png" alt="Sam Nguyen-Sop headshot">
         <div class="contact-card">
           <h3>Contact Info</h3>
           <div class="contact-list">
-            <div><strong>Phone:</strong> <span id="reportRepPhone">(213) 682-9497</span></div>
-            <div><strong>Email:</strong> <span id="reportRepEmail">samnguyen-sop@lgcypower.com</span></div>
-            <div><strong>Website:</strong> <span id="reportRepWebsite">https://www2.lgcypower.com/samnguyen-sop</span></div>
-            <div><strong>Location:</strong> <span id="reportRepContactLocation">Walnut, CA 91789</span></div>
+            <div><strong>Phone:</strong> (213) 682-9497</div>
+            <div><strong>Email:</strong> samnguyen-sop@lgcypower.com</div>
+            <div><strong>Website:</strong> https://www2.lgcypower.com/samnguyen-sop</div>
+            <div><strong>Location:</strong> Walnut, CA 91789</div>
           </div>
         </div>
       </div>
@@ -1343,38 +1199,22 @@
     const SOLAR_MIN_FACTOR = 0.52;
     const MARKET_TREND_INCREASES = [0, 9, 11, 13, 8, 3, 2, 9, 12, 10];
     const estimatedLocalAverageUsage = 6800;
-    const generatedOnLabel = 'Generated on: May 24, 2026';
-    const REP_SETUP_STORAGE_KEY = 'lgcyRepEstimatorSetup';
-    const DEFAULT_REP_SETUP = {
-      name: 'Sam Nguyen-Sop',
-      title: 'Energy Consultant',
-      phone: '(213) 682-9497',
-      email: 'samnguyen-sop@lgcypower.com',
-      website: 'https://www2.lgcypower.com/samnguyen-sop',
-      location: 'Walnut, CA 91789',
-      photo: 'assets/sam-nguyen-sop-headshot.png'
-    };
+    const DEFAULT_SOLAR_INCREASE = 3.5;
+    const generatedOnLabel = `Generated on: ${new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(new Date())}`;
 
     const monthlyInput = document.getElementById('monthlyInput');
-    const ownerName = document.getElementById('ownerName');
-    const ownerAddress = document.getElementById('ownerAddress');
-    const utilityRateInput = document.getElementById('utilityRateInput');
-    const utilityIncreaseInput = document.getElementById('utilityIncreaseInput');
-    const solarIncreaseInput = document.getElementById('solarIncreaseInput');
     const quickProfileCards = Array.from(document.querySelectorAll('.quick-card'));
     const quickProfileTotal = document.getElementById('quickProfileTotal');
-    const forecastOptions = Array.from(document.querySelectorAll('.forecast-option'));
-    const calculateBtn = document.getElementById('calculateBtn');
-    const sampleBtn = document.getElementById('sampleBtn');
+    const calculateBtn = document.getElementById('quick-estimate-generate');
     const resetBtn = document.getElementById('resetBtn');
-    const exportPngBtn = document.getElementById('exportPngBtn');
-    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const exportPngBtn = document.getElementById('export-png');
+    const exportPdfBtn = document.getElementById('export-pdf');
     const avgMetric = document.getElementById('avgMetric');
     const rateMetric = document.getElementById('rateMetric');
-    const assumedRateChip = document.getElementById('assumedRateChip');
-    const forecastStyleChip = document.getElementById('forecastStyleChip');
-    const utilityIncreaseChip = document.getElementById('utilityIncreaseChip');
-    const solarIncreaseChip = document.getElementById('solarIncreaseChip');
     const year1UtilityMetric = document.getElementById('year1UtilityMetric');
     const savingsMetric = document.getElementById('savingsMetric');
     const communityComparisonText = document.getElementById('communityComparisonText');
@@ -1382,30 +1222,11 @@
     const localAverageUsageDisplay = document.getElementById('localAverageUsageDisplay');
     const usageDifferenceDisplay = document.getElementById('usageDifferenceDisplay');
     const generatedOnText = document.getElementById('generatedOnText');
-    const reportOwnerName = document.getElementById('reportOwnerName');
-    const reportOwnerAddress = document.getElementById('reportOwnerAddress');
+    const reportYearlyUtilityMetric = document.getElementById('reportYearlyUtilityMetric');
+    const reportYearlyUsageMetric = document.getElementById('reportYearlyUsageMetric');
     const totalUtilityCostMetric = document.getElementById('totalUtilityCostMetric');
     const totalSavingsRangeMetric = document.getElementById('totalSavingsRangeMetric');
     const breakdownBody = document.getElementById('breakdownBody');
-    const repName = document.getElementById('repName');
-    const repTitle = document.getElementById('repTitle');
-    const repPhone = document.getElementById('repPhone');
-    const repEmail = document.getElementById('repEmail');
-    const repWebsite = document.getElementById('repWebsite');
-    const repLocation = document.getElementById('repLocation');
-    const repPhoto = document.getElementById('repPhoto');
-    const repPhotoPreview = document.getElementById('repPhotoPreview');
-    const saveRepSetupBtn = document.getElementById('saveRepSetupBtn');
-    const repSaveStatus = document.getElementById('repSaveStatus');
-    const reportRepName = document.getElementById('reportRepName');
-    const reportRepTitle = document.getElementById('reportRepTitle');
-    const reportRepLocation = document.getElementById('reportRepLocation');
-    const reportRepPhoto = document.getElementById('reportRepPhoto');
-    const reportRepPhone = document.getElementById('reportRepPhone');
-    const reportRepEmail = document.getElementById('reportRepEmail');
-    const reportRepWebsite = document.getElementById('reportRepWebsite');
-    const reportRepContactLocation = document.getElementById('reportRepContactLocation');
-    let pendingRepPhotoData = '';
 
     function money(value) {
       return new Intl.NumberFormat('en-US', {
@@ -1413,10 +1234,6 @@
         currency: 'USD',
         maximumFractionDigits: 2
       }).format(value || 0);
-    }
-
-    function percentLabel(value) {
-      return `${Number(value || 0).toFixed(1)}% per year`;
     }
 
     function ordinalSuffix(value) {
@@ -1436,73 +1253,10 @@
       return `${amount}% Lower Than Similar Homes`;
     }
 
-    function loadRepSetup() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(REP_SETUP_STORAGE_KEY) || '{}');
-        return { ...DEFAULT_REP_SETUP, ...saved };
-      } catch (error) {
-        return { ...DEFAULT_REP_SETUP };
-      }
-    }
-
-    function readRepSetupForm() {
-      const current = loadRepSetup();
-      return {
-        name: repName.value.trim() || DEFAULT_REP_SETUP.name,
-        title: repTitle.value.trim() || DEFAULT_REP_SETUP.title,
-        phone: repPhone.value.trim() || DEFAULT_REP_SETUP.phone,
-        email: repEmail.value.trim() || DEFAULT_REP_SETUP.email,
-        website: repWebsite.value.trim() || DEFAULT_REP_SETUP.website,
-        location: repLocation.value.trim() || DEFAULT_REP_SETUP.location,
-        photo: pendingRepPhotoData || current.photo || DEFAULT_REP_SETUP.photo
-      };
-    }
-
-    function fillRepSetupForm(rep) {
-      repName.value = rep.name;
-      repTitle.value = rep.title;
-      repPhone.value = rep.phone;
-      repEmail.value = rep.email;
-      repWebsite.value = rep.website;
-      repLocation.value = rep.location;
-      repPhotoPreview.src = rep.photo;
-      repPhotoPreview.alt = `${rep.name} photo preview`;
-      pendingRepPhotoData = '';
-    }
-
-    function applyRepSetup(rep) {
-      reportRepName.textContent = rep.name;
-      reportRepTitle.textContent = rep.title;
-      reportRepLocation.textContent = rep.location;
-      reportRepPhone.textContent = rep.phone;
-      reportRepEmail.textContent = rep.email;
-      reportRepWebsite.textContent = rep.website;
-      reportRepContactLocation.textContent = rep.location;
-      reportRepPhoto.src = rep.photo;
-      reportRepPhoto.alt = `${rep.name} headshot`;
-    }
-
-    function saveRepSetup() {
-      const rep = readRepSetupForm();
-      localStorage.setItem(REP_SETUP_STORAGE_KEY, JSON.stringify(rep));
-      fillRepSetupForm(rep);
-      applyRepSetup(rep);
-      repSaveStatus.textContent = 'Rep setup saved';
-      window.setTimeout(() => {
-        repSaveStatus.textContent = '';
-      }, 2800);
-    }
-
     function comparisonStatusClass(value) {
       if (Math.abs(value) < 2) return 'is-near';
       if (value > 0) return 'is-above';
       return 'is-below';
-    }
-
-    function normalizeInputs() {
-      if (!utilityRateInput.value) utilityRateInput.value = ESTIMATED_RATE.toFixed(3);
-      if (!utilityIncreaseInput.value) utilityIncreaseInput.value = '10.5';
-      if (!solarIncreaseInput.value) solarIncreaseInput.value = '3.5';
     }
 
     function selectedQuickProfileTotal() {
@@ -1534,24 +1288,7 @@
       render();
     }
 
-    function selectedForecastMode() {
-      const selected = forecastOptions.find((option) => option.getAttribute('aria-pressed') === 'true');
-      return selected ? selected.dataset.forecastMode : 'market';
-    }
-
-    function setForecastMode(mode) {
-      forecastOptions.forEach((option) => {
-        const isSelected = option.dataset.forecastMode === mode;
-        option.classList.toggle('is-selected', isSelected);
-        option.setAttribute('aria-pressed', String(isSelected));
-      });
-    }
-
-    function utilityForecastFactor(year, mode, simpleIncrease) {
-      if (mode === 'simple') {
-        return (1 + (simpleIncrease / 100)) ** (year - 1);
-      }
-
+    function utilityForecastFactor(year) {
       let factor = 1;
       for (let index = 1; index < year; index += 1) {
         factor *= 1 + ((MARKET_TREND_INCREASES[index] || 0) / 100);
@@ -1562,8 +1299,7 @@
     async function exportReport(kind) {
       if (!window.html2canvas) return;
       const report = document.getElementById('reportSection');
-      const safeName = (ownerName.value.trim() || 'homeowner').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'report';
-      const base = `energy-cost-report-${safeName}`;
+      const base = 'anonymous-simple-energy-estimate';
       report.classList.add('export-mode');
 
       try {
@@ -1608,27 +1344,17 @@
 
     function render() {
       const avg = Number.parseFloat(monthlyInput.value);
-      const utilityRate = Number.parseFloat(utilityRateInput.value) || ESTIMATED_RATE;
-      const utilityIncrease = Number.parseFloat(utilityIncreaseInput.value) || 10.5;
-      const solarIncrease = Number.parseFloat(solarIncreaseInput.value) || 3.5;
-      const forecastMode = selectedForecastMode();
-      const ownerNameValue = ownerName.value.trim() || 'Homeowner name';
-      const ownerAddressValue = ownerAddress.value.trim() || 'Homeowner address';
-      const rateLabel = `$${utilityRate.toFixed(3)}/kWh`;
-      rateMetric.textContent = rateLabel;
-      assumedRateChip.textContent = rateLabel;
-      reportOwnerName.textContent = ownerNameValue;
-      reportOwnerAddress.textContent = ownerAddressValue;
+      const utilityRate = ESTIMATED_RATE;
+      const solarIncrease = DEFAULT_SOLAR_INCREASE;
       generatedOnText.textContent = generatedOnLabel;
-      normalizeInputs();
-      forecastStyleChip.textContent = forecastMode === 'simple' ? 'Simple' : 'Market Trend';
-      utilityIncreaseChip.textContent = forecastMode === 'simple' ? percentLabel(utilityIncrease) : 'Modeled yearly pattern';
-      solarIncreaseChip.textContent = percentLabel(solarIncrease);
 
       if (!Number.isFinite(avg) || avg <= 0) {
         avgMetric.textContent = '$0.00';
+        rateMetric.textContent = '0 kWh';
         year1UtilityMetric.textContent = '$0.00';
         savingsMetric.textContent = '$0.00 - $0.00';
+        reportYearlyUtilityMetric.textContent = '$0.00';
+        reportYearlyUsageMetric.textContent = '0 kWh';
         totalUtilityCostMetric.textContent = '$0.00';
         totalSavingsRangeMetric.textContent = '$0.00 - $0.00';
         homeownerYearlyUsageDisplay.textContent = '0 kWh/year';
@@ -1649,6 +1375,7 @@
       const year1MinSavings = year1Utility - year1SolarMax;
       const year1MaxSavings = year1Utility - year1SolarMin;
       const homeownerYearlyUsage = annualUsage;
+      const roundedAnnualUsage = Math.round(homeownerYearlyUsage);
       const usageDifferencePercent = ((homeownerYearlyUsage - estimatedLocalAverageUsage) / estimatedLocalAverageUsage) * 100;
       const comparisonText = Math.abs(usageDifferencePercent) < 2
         ? 'Your estimated usage is near the local average for similar homes.'
@@ -1658,7 +1385,10 @@
 
       year1UtilityMetric.textContent = money(year1Utility);
       savingsMetric.textContent = `${money(year1MinSavings)} - ${money(year1MaxSavings)}`;
-      homeownerYearlyUsageDisplay.textContent = `${Math.round(homeownerYearlyUsage).toLocaleString()} kWh/year`;
+      rateMetric.textContent = `${roundedAnnualUsage.toLocaleString()} kWh`;
+      reportYearlyUtilityMetric.textContent = money(year1Utility);
+      reportYearlyUsageMetric.textContent = `${roundedAnnualUsage.toLocaleString()} kWh`;
+      homeownerYearlyUsageDisplay.textContent = `${roundedAnnualUsage.toLocaleString()} kWh/year`;
       localAverageUsageDisplay.textContent = `${estimatedLocalAverageUsage.toLocaleString()} kWh/year`;
       usageDifferenceDisplay.textContent = comparisonBadgeText(usageDifferencePercent);
       usageDifferenceDisplay.className = `community-diff-badge ${comparisonStatusClass(usageDifferencePercent)}`;
@@ -1669,7 +1399,7 @@
       let totalMinSavings = 0;
       let totalMaxSavings = 0;
       for (let year = 1; year <= 10; year += 1) {
-        const utilityCost = year1Utility * utilityForecastFactor(year, forecastMode, utilityIncrease);
+        const utilityCost = year1Utility * utilityForecastFactor(year);
         const solarMaxCost = year1SolarMax * ((1 + (solarIncrease / 100)) ** (year - 1));
         const solarMinCost = year1SolarMin * ((1 + (solarIncrease / 100)) ** (year - 1));
         const minSavings = utilityCost - solarMaxCost;
@@ -1679,7 +1409,7 @@
         totalMaxSavings += maxSavings;
         rows.push(`
           <tr>
-            <td>${year}${ordinalSuffix(year)} year solar+battery</td>
+            <td>${year}${ordinalSuffix(year)} year Energy Program Cost</td>
             <td class="solar-max-cell">${money(solarMaxCost)}</td>
             <td class="savings-cell">${money(minSavings)}</td>
             <td class="solar-min-cell">${money(solarMinCost)}</td>
@@ -1695,25 +1425,8 @@
     }
 
     calculateBtn.addEventListener('click', render);
-    sampleBtn.addEventListener('click', () => {
-      ownerName.value = 'Sam Nguyen-Sop';
-      ownerAddress.value = 'Walnut, CA 91789';
-      monthlyInput.value = '150';
-      utilityRateInput.value = '0.405';
-      utilityIncreaseInput.value = '10.5';
-      solarIncreaseInput.value = '3.5';
-      setForecastMode('market');
-      clearQuickProfile();
-      render();
-    });
     resetBtn.addEventListener('click', () => {
       monthlyInput.value = '';
-      ownerName.value = '';
-      ownerAddress.value = '';
-      utilityRateInput.value = '';
-      utilityIncreaseInput.value = '';
-      solarIncreaseInput.value = '';
-      setForecastMode('market');
       clearQuickProfile();
       render();
       monthlyInput.focus();
@@ -1735,37 +1448,10 @@
         applyQuickProfileEstimate();
       });
     });
-    forecastOptions.forEach((option) => {
-      option.addEventListener('click', () => {
-        setForecastMode(option.dataset.forecastMode);
-        render();
-      });
-    });
-    ownerName.addEventListener('input', render);
-    ownerAddress.addEventListener('input', render);
-    utilityRateInput.addEventListener('input', render);
-    utilityIncreaseInput.addEventListener('input', render);
-    solarIncreaseInput.addEventListener('input', render);
     monthlyInput.addEventListener('input', render);
-    repPhoto.addEventListener('change', () => {
-      const [file] = repPhoto.files;
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.addEventListener('load', () => {
-        pendingRepPhotoData = String(reader.result || '');
-        repPhotoPreview.src = pendingRepPhotoData;
-      });
-      reader.readAsDataURL(file);
-    });
-    saveRepSetupBtn.addEventListener('click', saveRepSetup);
     exportPngBtn.addEventListener('click', () => exportReport('png'));
     exportPdfBtn.addEventListener('click', () => exportReport('pdf'));
 
-    const savedRepSetup = loadRepSetup();
-    fillRepSetupForm(savedRepSetup);
-    applyRepSetup(savedRepSetup);
-    normalizeInputs();
     syncQuickProfileTotal();
     render();
   </script>
